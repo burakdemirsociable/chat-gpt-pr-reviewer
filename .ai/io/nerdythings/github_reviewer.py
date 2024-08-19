@@ -23,12 +23,13 @@ def main():
     github = GitHub(vars.token, vars.owner, vars.repo, vars.pull_number)
 
     remote_name = Git.get_remote_name()
-    
+
     Log.print_green("Remote is", remote_name)
     changed_files = Git.get_diff_files(remote_name=remote_name, head_ref=vars.head_ref, base_ref=vars.base_ref)
     Log.print_green("Found changes in files", changed_files)
-    if len(changed_files) == 0: 
-        Log.print_red("No changes between branch")
+
+    if len(changed_files) == 0:
+        Log.print_red("No changes between branches")
 
     for file in changed_files:
         Log.print_green("Checking file", file)
@@ -36,35 +37,26 @@ def main():
         _, file_extension = os.path.splitext(file)
         file_extension = file_extension.lstrip('.')
         if file_extension not in vars.target_extensions:
-            Log.print_yellow(f"Skipping, unsuported extension {file_extension} file {file}")
+            Log.print_yellow(f"Skipping unsupported extension {file_extension} for file {file}")
             continue
 
-        try:
-            with open(file, 'r') as file_opened:
-                file_content = file_opened.read()
-        except FileNotFoundError:
-            Log.print_yellow("File was removed. Continue.", file)
+        file_diffs = Git.get_diff_in_file(remote_name=remote_name, head_ref=vars.head_ref, base_ref=vars.base_ref,
+                                          file_path=file)
+        if not file_diffs:  # Assuming get_diff_in_file now returns None or empty list if no diffs
+            Log.print_red("No diffs found in the file")
             continue
 
-        if len( file_content ) == 0: 
-            Log.print_red("File is empty")
-            continue
+        Log.print_green(f"Asking AI. Diff Len: {len(file_diffs)}")
+        response = ai.ai_request_diffs(diffs=file_diffs)  # Adjusted to send only diffs
 
-        file_diffs = Git.get_diff_in_file(remote_name=remote_name, head_ref=vars.head_ref, base_ref=vars.base_ref, file_path=file)
-        if len( file_diffs ) == 0: 
-            Log.print_red("Diffs are empty")
-        
-        Log.print_green(f"Asking AI. Content Len:{len(file_content)} Diff Len: {len(file_diffs)}")
-        response = ai.ai_request_diffs(code=file_content, diffs=file_diffs)
-
-        log_file.write(f"{separator}{file_content}{separator}{file_diffs}{separator}{response}{separator}")
+        log_file.write(f"{separator}{file_diffs}{separator}{response}{separator}")
 
         if AiBot.is_no_issues_text(response):
             Log.print_green("File looks good. Continue", file)
         else:
             responses = AiBot.split_ai_response(response)
-            if len(responses) == 0:
-                Log.print_red("Responses where not parsed:", responses)
+            if not responses:
+                Log.print_red("Responses were not parsed correctly:", responses)
 
             result = False
             for response in responses:
@@ -74,7 +66,8 @@ def main():
                     result = post_general_comment(github=github, file=file, text=response.text)
                 if not result:
                     raise RepositoryError("Failed to post any comments.")
-                    
+
+
 def post_line_comment(github: GitHub, file: str, text:str, line: int):
     Log.print_green("Posting line", file, line, text)
     try:
