@@ -31,7 +31,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies
-        run: pip install -r other-repo/.ai_files/io/nerdythings/requirements.txt
+        run: pip install -r burakdemirsociable/chat-gpt-pr-reviewer/.ai_files/io/nerdythings/requirements.txt
         working-directory: ./other-repo
       
       - name: Run Reviewer Script

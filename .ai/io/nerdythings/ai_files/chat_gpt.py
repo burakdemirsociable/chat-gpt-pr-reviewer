@@ -4,7 +4,7 @@
 
 import os
 from openai import OpenAI
-from ai_bot import AiBot
+from ai_files.ai_bot import AiBot
 
 class ChatGPT(AiBot):
 
