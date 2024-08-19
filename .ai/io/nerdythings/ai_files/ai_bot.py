@@ -3,7 +3,7 @@
 # Author: Eugene Tkachenko
 
 from abc import ABC, abstractmethod
-from ai.line_comment import LineComment
+from line_comment import LineComment
 
 class AiBot(ABC):
     

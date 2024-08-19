@@ -5,8 +5,8 @@
 import os
 from git import Git 
 from pathlib import Path
-from ai.chat_gpt import ChatGPT
-from ai.ai_bot import AiBot
+from ai_files.chat_gpt import ChatGPT
+from ai_files.ai_bot import AiBot
 from log import Log
 from env_vars import EnvVars
 from repository.github import GitHub
